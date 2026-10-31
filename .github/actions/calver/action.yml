@@ -1,0 +1,14 @@
+name: "CalVer Generator"
+description: "Generates a CalVer string (YYYY.MM.DD-HH.MM.SS)"
+outputs:
+  calver:
+    value: ${{ steps.generate.outputs.calver }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: generate
+      shell: bash
+      run: |
+        DATE=$(date +%Y.%m.%d-%H.%M.%S)
+        echo "calver=${DATE}" >> "$GITHUB_OUTPUT"

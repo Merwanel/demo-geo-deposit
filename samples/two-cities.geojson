@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Paris" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2.35, 48.85]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Lyon" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4.83, 45.76]
+      }
+    }
+  ]
+}

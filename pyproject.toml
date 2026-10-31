@@ -1,0 +1,27 @@
+[project]
+name = "demo-geo-deposit"
+version = "0.1.0"
+description = "Deposit GeoJSON into a local GeoNetwork catalog as ISO 19139 metadata."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.162.0",
+    "pygeometa>=0.21.1",
+    "python-dotenv>=1.2.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.3",
+    "testcontainers>=4.15.0",
+]

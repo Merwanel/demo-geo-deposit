@@ -90,6 +90,8 @@ services:
       GN_PASSWORD: admin
       GN_GROUP: sample
       DATAVERSE_TOKEN: ${DATAVERSE_TOKEN:-}
+      DATAVERSE_BASE_URL: ${DATAVERSE_BASE_URL:-https://demo.dataverse.org}
+      DATAVERSE_COLLECTION: ${DATAVERSE_COLLECTION:-root}
     depends_on:
       geonetwork:
         condition: service_healthy

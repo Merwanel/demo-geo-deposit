@@ -85,16 +85,36 @@ def build_iso19139(
     abstract: str,
     bbox: list[float],
     public_url: str,
+    dataverse_url: str | None = None,
 ) -> str:
     """Build an ISO 19139 XML string with pygeometa.
 
-    The catalog page URL is written into both identification and distribution.
+    The catalog page URL is written into identification and distribution. When
+    ``dataverse_url`` is set, a second distribution link points at that draft.
     """
     today = datetime.now(UTC).date().isoformat()
 
     catalog_page = (
         f"{public_url.rstrip('/')}/srv/eng/catalog.search#/metadata/{record_uuid}"
     )
+    distribution: dict[str, Any] = {
+        "catalog": {
+            "url": catalog_page,
+            "type": "WWW:LINK",
+            "function": "information",
+            "name": {"en": "Catalog record"},
+            "description": {"en": "This record in the local catalog"},
+        }
+    }
+    if dataverse_url:
+        distribution["dataverse"] = {
+            "url": dataverse_url,
+            "type": "WWW:LINK",
+            "function": "information",
+            "name": {"en": "Dataverse dataset"},
+            "description": {"en": "Draft dataset on Dataverse"},
+        }
+
     mcf = {
         "mcf": {"version": "1.0"},
         "metadata": {
@@ -134,15 +154,7 @@ def build_iso19139(
                 "email": "demo@example.org",
             }
         },
-        "distribution": {
-            "catalog": {
-                "url": catalog_page,
-                "type": "WWW:LINK",
-                "function": "information",
-                "name": {"en": "Catalog record"},
-                "description": {"en": "This record in the local catalog"},
-            }
-        },
+        "distribution": distribution,
     }
     return ISO19139OutputSchema().write(mcf)
 

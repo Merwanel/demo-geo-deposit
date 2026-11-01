@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Catalog connection and public URL settings."""
+    """Catalog, Dataverse, and public URL settings."""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     gn_username: str = "admin"
     gn_password: str = "admin"
     gn_group: str = "sample"
+
+    dataverse_token: str = ""
+    dataverse_base_url: str = "https://demo.dataverse.org"
+    dataverse_collection: str = "root"
 
 
 @lru_cache

@@ -1,4 +1,4 @@
-"""Deposit endpoint: GeoJSON in, catalog record out."""
+"""Deposit endpoint: GeoJSON in, catalog record and Dataverse draft out."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.config import Settings, get_settings
+from app.dataverse import DataverseError, create_draft
 from app.geonetwork import CatalogError, DuplicateRecordError, insert_record
 from app.metadata import GeoJSONError, build_iso19139, fingerprint_uuid, parse_geojson
 
@@ -23,6 +24,7 @@ class DepositResponse(BaseModel):
     uuid: str
     id: int
     catalog_url: str
+    dataverse_url: str
 
 
 def _deposit_failed() -> HTTPException:
@@ -47,12 +49,32 @@ async def create_deposit(
 ) -> JSONResponse:
     data = await file.read()
     record_uuid = fingerprint_uuid(data)
+    record_uuid_str = str(record_uuid)
+
+    if not settings.dataverse_token.strip():
+        raise _deposit_failed()
 
     try:
         bbox = parse_geojson(data)
     except GeoJSONError as exc:
         raise _deposit_failed() from exc
 
+    try:
+        draft = create_draft(
+            settings,
+            title=title,
+            author=author,
+            abstract=abstract,
+            license_name=license,
+        )
+    except DataverseError as exc:
+        logger.exception("Dataverse deposit failed")
+        raise _deposit_failed() from exc
+
+    catalog_url = (
+        f"{settings.gn_public_url.rstrip('/')}"
+        f"/srv/eng/catalog.search#/metadata/{record_uuid_str}"
+    )
     xml = build_iso19139(
         record_uuid=record_uuid,
         title=title,
@@ -61,14 +83,11 @@ async def create_deposit(
         abstract=abstract,
         bbox=bbox,
         public_url=settings.gn_public_url,
-    )
-    catalog_url = (
-        f"{settings.gn_public_url.rstrip('/')}"
-        f"/srv/eng/catalog.search#/metadata/{record_uuid}"
+        dataverse_url=draft.url,
     )
 
     try:
-        result = insert_record(settings, xml, str(record_uuid))
+        result = insert_record(settings, xml, record_uuid_str)
     except DuplicateRecordError as exc:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
@@ -85,6 +104,7 @@ async def create_deposit(
         uuid=result.uuid,
         id=result.id,
         catalog_url=catalog_url,
+        dataverse_url=draft.url,
     )
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,

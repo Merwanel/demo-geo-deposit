@@ -27,10 +27,19 @@ class DepositResponse(BaseModel):
     dataverse_url: str
 
 
+class DepositFailedResponse(BaseModel):
+    detail: str = "Deposit failed."
+
+
+class DuplicateDepositResponse(BaseModel):
+    uuid: str
+    detail: str = "This file was already deposited."
+
+
 def _deposit_failed() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Deposit failed.",
+        detail=DepositFailedResponse.model_fields["detail"].default,
     )
 
 
@@ -38,6 +47,16 @@ def _deposit_failed() -> HTTPException:
     "/deposits",
     status_code=status.HTTP_201_CREATED,
     response_model=DepositResponse,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {
+            "model": DepositFailedResponse,
+            "description": DepositFailedResponse.model_fields["detail"].default,
+        },
+        status.HTTP_409_CONFLICT: {
+            "model": DuplicateDepositResponse,
+            "description": DuplicateDepositResponse.model_fields["detail"].default,
+        },
+    },
 )
 async def create_deposit(
     file: Annotated[UploadFile, File()],
@@ -91,10 +110,7 @@ async def create_deposit(
     except DuplicateRecordError as exc:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
-            content={
-                "uuid": exc.record_uuid,
-                "detail": "This file was already deposited.",
-            },
+            content=DuplicateDepositResponse(uuid=exc.record_uuid).model_dump(),
         )
     except (CatalogError, httpx.HTTPError) as exc:
         logger.exception("Catalog deposit failed")

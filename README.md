@@ -7,15 +7,15 @@ demo-geo-deposit turns a GeoJSON file, a title, an author, a license, and an abs
 
 ```mermaid
 sequenceDiagram
-    actor Reviewer
+    actor User
     participant API
     participant GeoNetwork
-    Reviewer->>API: POST /deposits (file, title, author, license, abstract)
-    Note over API: UUID and bounding box from the file;<br/>ISO 19139 record built from them
+    User->>API: POST /deposits
+    Note right of API: UUID + bbox from file;<br/>build ISO 19139
     API->>GeoNetwork: PUT ISO 19139 record
     GeoNetwork-->>API: 201
-    Note over API: uploaded file discarded
-    API-->>Reviewer: 201 catalog_url
+    Note right of API: uploaded file discarded
+    API-->>User: 201 catalog_url
 ```
 
 ## Features
@@ -28,7 +28,7 @@ sequenceDiagram
 
 ## How a deposit flows
 
-1. The reviewer sends `POST /deposits` as `multipart/form-data` with `file`, `title`, `author`, `license`, and `abstract`.
+1. The user sends `POST /deposits` as `multipart/form-data` with `file`, `title`, `author`, `license`, and `abstract`.
 2. The API fingerprints the raw file bytes into a UUID, walks the GeoJSON for a WGS 84 bounding box, and builds an ISO 19139 record.
 3. The API authenticates to GeoNetwork, then `PUT`s the XML with `publishToAll=true`.
 4. On success the API returns HTTP 201 with `uuid`, `id`, and `catalog_url`, and discards the uploaded bytes. The record is not attached to the file.

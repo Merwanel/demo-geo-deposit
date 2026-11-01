@@ -23,8 +23,8 @@ sequenceDiagram
 
 `POST /deposits` puts the GeoJSON in a local iRODS zone under `/tempZone/home/rods/deposits/{uuid}.geojson` and tags that object with the deposit UUID. It creates a draft on `demo.dataverse.org` that cites the iRODS path but does not upload the file, then publishes an ISO 19139 record in GeoNetwork that is publicly visible and links the catalog page, the Dataverse draft, and the iRODS path. Depositing the same file bytes again returns HTTP 409.
 
-<!-- Drop a crop of the public GeoNetwork record (bbox + distribution links) at docs/geonetwork-record.png -->
-![GeoNetwork record after a deposit](docs/geonetwork-record.png)
+
+![GeoNetwork record after a deposit](docs/screenshot-map-links.png)
 
 ## Tech stack
 

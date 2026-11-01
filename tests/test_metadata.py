@@ -11,6 +11,9 @@ def test_iso19139_contains_required_fields() -> None:
         "https://demo.dataverse.org/dataset.xhtml"
         "?persistentId=doi:10.5072/FK2/EXAMPLE&version=DRAFT"
     )
+    irods_path = (
+        "/tempZone/home/rods/deposits/11111111-1111-5111-8111-111111111111.geojson"
+    )
     xml = build_iso19139(
         record_uuid=record_uuid,
         title="Paris and Lyon",
@@ -20,6 +23,7 @@ def test_iso19139_contains_required_fields() -> None:
         bbox=[2.35, 45.76, 4.83, 48.85],
         public_url="http://localhost:8080/geonetwork",
         dataverse_url=dataverse_url,
+        irods_path=irods_path,
     )
     assert str(record_uuid) in xml
     assert "Paris and Lyon" in xml
@@ -31,4 +35,6 @@ def test_iso19139_contains_required_fields() -> None:
     assert "48.85" in xml
     assert "doi:10.5072/FK2/EXAMPLE&amp;version=DRAFT" in xml
     assert "Dataverse dataset" in xml
+    assert irods_path in xml
+    assert "iRODS path" in xml
 

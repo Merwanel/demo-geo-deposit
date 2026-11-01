@@ -1,7 +1,7 @@
 [project]
 name = "demo-geo-deposit"
 version = "0.1.0"
-description = "Deposit GeoJSON into a local GeoNetwork catalog and a Dataverse draft."
+description = "Deposit GeoJSON into local iRODS, a Dataverse draft, and a GeoNetwork catalog."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
@@ -9,6 +9,7 @@ dependencies = [
     "pydataverse>=0.3.5",
     "pygeometa>=0.21.1",
     "python-dotenv>=1.2.4",
+    "python-irodsclient>=3.3.0",
 ]
 
 [tool.pytest.ini_options]

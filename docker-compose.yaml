@@ -2,6 +2,9 @@ volumes:
   geonetwork:
   esdata:
   pgdata:
+  icatdata:
+  irods_lib:
+  irods_etc:
 
 services:
   geonetwork:
@@ -73,6 +76,41 @@ services:
     volumes:
       - esdata:/usr/share/elasticsearch/data
 
+  icat:
+    image: postgres:17.6
+    environment:
+      POSTGRES_USER: irods
+      POSTGRES_PASSWORD: irods
+      POSTGRES_DB: ICAT
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U irods -d ICAT -c 'select 1' > /dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - icatdata:/var/lib/postgresql/data
+
+  irods:
+    build:
+      context: ./irods
+      dockerfile: Dockerfile
+    image: demo-geo-deposit-irods:4.3.5
+    hostname: irods
+    depends_on:
+      icat:
+        condition: service_healthy
+    ports:
+      - "1247:1247"
+    volumes:
+      - irods_lib:/var/lib/irods
+      - irods_etc:/etc/irods
+    healthcheck:
+      test: ["CMD-SHELL", "su - irods -c 'ils /tempZone/home/rods' >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 180s
+
   api:
     build: .
     healthcheck:
@@ -92,8 +130,15 @@ services:
       DATAVERSE_TOKEN: ${DATAVERSE_TOKEN:-}
       DATAVERSE_BASE_URL: ${DATAVERSE_BASE_URL:-https://demo.dataverse.org}
       DATAVERSE_COLLECTION: ${DATAVERSE_COLLECTION:-root}
+      IRODS_HOST: irods
+      IRODS_PORT: "1247"
+      IRODS_USER: rods
+      IRODS_PASSWORD: rods
+      IRODS_ZONE: tempZone
     depends_on:
       geonetwork:
+        condition: service_healthy
+      irods:
         condition: service_healthy
 
   seed:

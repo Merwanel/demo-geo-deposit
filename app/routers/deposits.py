@@ -1,4 +1,4 @@
-"""Deposit endpoint: GeoJSON in, catalog record and Dataverse draft out."""
+"""Deposit endpoint: GeoJSON in, iRODS object, Dataverse draft, and catalog record out."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from app.config import Settings, get_settings
 from app.dataverse import DataverseError, create_draft
 from app.geonetwork import CatalogError, DuplicateRecordError, insert_record
+from app.irods import IrodsError, put_deposit_object
 from app.metadata import GeoJSONError, build_iso19139, fingerprint_uuid, parse_geojson
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ class DepositResponse(BaseModel):
     id: int
     catalog_url: str
     dataverse_url: str
+    irods_path: str
 
 
 class DepositFailedResponse(BaseModel):
@@ -79,12 +81,19 @@ async def create_deposit(
         raise _deposit_failed() from exc
 
     try:
+        irods_path = put_deposit_object(settings, record_uuid_str, data)
+    except IrodsError as exc:
+        logger.exception("iRODS deposit failed")
+        raise _deposit_failed() from exc
+
+    try:
         draft = create_draft(
             settings,
             title=title,
             author=author,
             abstract=abstract,
             license_name=license,
+            irods_path=irods_path,
         )
     except DataverseError as exc:
         logger.exception("Dataverse deposit failed")
@@ -103,6 +112,7 @@ async def create_deposit(
         bbox=bbox,
         public_url=settings.gn_public_url,
         dataverse_url=draft.url,
+        irods_path=irods_path,
     )
 
     try:
@@ -121,6 +131,7 @@ async def create_deposit(
         id=result.id,
         catalog_url=catalog_url,
         dataverse_url=draft.url,
+        irods_path=irods_path,
     )
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,

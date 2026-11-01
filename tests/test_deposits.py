@@ -1,4 +1,4 @@
-"""Deposit tests. Dataverse is mocked."""
+"""Deposit tests. Dataverse and iRODS are mocked."""
 
 from __future__ import annotations
 
@@ -33,6 +33,8 @@ FAKE_DRAFT = DraftResult(
         "?persistentId=doi:10.5072/FK2/TESTDEPOSIT&version=DRAFT"
     ),
 )
+
+FAKE_IRODS_PATH = "/tempZone/home/rods/deposits/11111111-1111-5111-8111-111111111111.geojson"
 
 
 def _unique_sample_bytes() -> bytes:
@@ -104,16 +106,28 @@ def _deposit(
     return client.post("/deposits", data=fields or FIELDS, files=files)
 
 
+def _irods_path_for(content: bytes) -> str:
+    from app.metadata import fingerprint_uuid
+
+    return f"/tempZone/home/rods/deposits/{fingerprint_uuid(content)}.geojson"
+
+
+@patch("app.routers.deposits.put_deposit_object", return_value=FAKE_IRODS_PATH)
 @patch("app.routers.deposits.create_draft", return_value=FAKE_DRAFT)
-def test_deposit_sample_returns_201(mock_draft, client: TestClient) -> None:
-    response = _deposit(client, content=_unique_sample_bytes())
+def test_deposit_sample_returns_201(mock_draft, mock_irods, client: TestClient) -> None:
+    content = _unique_sample_bytes()
+    expected_path = _irods_path_for(content)
+    mock_irods.return_value = expected_path
+    response = _deposit(client, content=content)
     assert response.status_code == 201
     body = response.json()
     assert "uuid" in body
     assert isinstance(body["id"], int)
     assert body["catalog_url"].endswith(f"/metadata/{body['uuid']}")
     assert body["dataverse_url"] == FAKE_DRAFT.url
+    assert body["irods_path"] == expected_path
     assert response.headers["location"] == body["catalog_url"]
+    mock_irods.assert_called_once()
     mock_draft.assert_called_once()
 
 
@@ -123,13 +137,17 @@ def test_deposit_without_token_returns_400(client_without_token: TestClient) -> 
     assert response.json() == {"detail": "Deposit failed."}
 
 
+@patch("app.routers.deposits.put_deposit_object", return_value=FAKE_IRODS_PATH)
 @patch("app.routers.deposits.create_draft", return_value=FAKE_DRAFT)
-def test_duplicate_deposit_returns_409(mock_draft, client: TestClient) -> None:
+def test_duplicate_deposit_returns_409(mock_draft, mock_irods, client: TestClient) -> None:
     content = SAMPLE.read_bytes()
+    expected_path = _irods_path_for(content)
+    mock_irods.return_value = expected_path
     first = _deposit(client, content=content)
     assert first.status_code in {201, 409}
     expected_uuid = first.json()["uuid"]
     mock_draft.reset_mock()
+    mock_irods.reset_mock()
     second = _deposit(
         client,
         content=content,
@@ -139,4 +157,5 @@ def test_duplicate_deposit_returns_409(mock_draft, client: TestClient) -> None:
     body = second.json()
     assert body["uuid"] == expected_uuid
     assert body["detail"] == "This file was already deposited."
+    mock_irods.assert_called_once()
     mock_draft.assert_called_once()

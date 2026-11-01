@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Catalog, Dataverse, and public URL settings."""
+    """Catalog, Dataverse, iRODS, and public URL settings."""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -20,8 +20,13 @@ class Settings(BaseSettings):
     dataverse_base_url: str = "https://demo.dataverse.org"
     dataverse_collection: str = "root"
 
+    irods_host: str = "localhost"
+    irods_port: int = 1247
+    irods_user: str = "rods"
+    irods_password: str = "rods"
+    irods_zone: str = "tempZone"
+
 
 @lru_cache
 def get_settings() -> Settings:
-    """Return cached settings; tests may clear the cache to replace them."""
     return Settings()

@@ -64,79 +64,90 @@ def build_dataset_metadata(
     author: str,
     abstract: str,
     license_name: str,
+    irods_path: str | None = None,
 ) -> dict[str, Any]:
     """Build the minimal native JSON body for ``create_dataset``."""
+    fields: list[dict[str, Any]] = [
+        {
+            "typeName": "title",
+            "multiple": False,
+            "typeClass": "primitive",
+            "value": title,
+        },
+        {
+            "typeName": "author",
+            "multiple": True,
+            "typeClass": "compound",
+            "value": [
+                {
+                    "authorName": {
+                        "typeName": "authorName",
+                        "multiple": False,
+                        "typeClass": "primitive",
+                        "value": author,
+                    }
+                }
+            ],
+        },
+        {
+            "typeName": "datasetContact",
+            "multiple": True,
+            "typeClass": "compound",
+            "value": [
+                {
+                    "datasetContactName": {
+                        "typeName": "datasetContactName",
+                        "multiple": False,
+                        "typeClass": "primitive",
+                        "value": author,
+                    },
+                    "datasetContactEmail": {
+                        "typeName": "datasetContactEmail",
+                        "multiple": False,
+                        "typeClass": "primitive",
+                        "value": CONTACT_EMAIL,
+                    },
+                }
+            ],
+        },
+        {
+            "typeName": "dsDescription",
+            "multiple": True,
+            "typeClass": "compound",
+            "value": [
+                {
+                    "dsDescriptionValue": {
+                        "typeName": "dsDescriptionValue",
+                        "multiple": False,
+                        "typeClass": "primitive",
+                        "value": abstract,
+                    }
+                }
+            ],
+        },
+        {
+            "typeName": "subject",
+            "multiple": True,
+            "typeClass": "controlledVocabulary",
+            "value": ["Other"],
+        },
+    ]
+    if irods_path:
+        fields.append(
+            {
+                "typeName": "otherReferences",
+                "multiple": True,
+                "typeClass": "primitive",
+                "value": [irods_path],
+            }
+        )
     return {
         "datasetVersion": {
             "license": resolve_license(license_name),
             "metadataBlocks": {
                 "citation": {
                     "displayName": "Citation Metadata",
-                    "fields": [
-                        {
-                            "typeName": "title",
-                            "multiple": False,
-                            "typeClass": "primitive",
-                            "value": title,
-                        },
-                        {
-                            "typeName": "author",
-                            "multiple": True,
-                            "typeClass": "compound",
-                            "value": [
-                                {
-                                    "authorName": {
-                                        "typeName": "authorName",
-                                        "multiple": False,
-                                        "typeClass": "primitive",
-                                        "value": author,
-                                    }
-                                }
-                            ],
-                        },
-                        {
-                            "typeName": "datasetContact",
-                            "multiple": True,
-                            "typeClass": "compound",
-                            "value": [
-                                {
-                                    "datasetContactName": {
-                                        "typeName": "datasetContactName",
-                                        "multiple": False,
-                                        "typeClass": "primitive",
-                                        "value": author,
-                                    },
-                                    "datasetContactEmail": {
-                                        "typeName": "datasetContactEmail",
-                                        "multiple": False,
-                                        "typeClass": "primitive",
-                                        "value": CONTACT_EMAIL,
-                                    },
-                                }
-                            ],
-                        },
-                        {
-                            "typeName": "dsDescription",
-                            "multiple": True,
-                            "typeClass": "compound",
-                            "value": [
-                                {
-                                    "dsDescriptionValue": {
-                                        "typeName": "dsDescriptionValue",
-                                        "multiple": False,
-                                        "typeClass": "primitive",
-                                        "value": abstract,
-                                    }
-                                }
-                            ],
-                        },
-                        {
-                            "typeName": "subject",
-                            "multiple": True,
-                            "typeClass": "controlledVocabulary",
-                            "value": ["Other"],
-                        },
-                    ],
+                    "fields": fields,
                 }
             },
         }
@@ -159,6 +170,7 @@ def create_draft(
     author: str,
     abstract: str,
     license_name: str,
+    irods_path: str,
 ) -> DraftResult:
     """Create a draft dataset and return its persistent id and draft page URL."""
     token = settings.dataverse_token.strip()
@@ -172,6 +184,7 @@ def create_draft(
         author=author,
         abstract=abstract,
         license_name=license_name,
+        irods_path=irods_path,
     )
 
     try:

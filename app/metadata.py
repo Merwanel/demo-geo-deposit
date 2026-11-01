@@ -86,11 +86,13 @@ def build_iso19139(
     bbox: list[float],
     public_url: str,
     dataverse_url: str | None = None,
+    irods_path: str | None = None,
 ) -> str:
     """Build an ISO 19139 XML string with pygeometa.
 
     The catalog page URL is written into identification and distribution. When
-    ``dataverse_url`` is set, a second distribution link points at that draft.
+    ``dataverse_url`` or ``irods_path`` is set, additional distribution entries
+    point at that draft or logical path.
     """
     today = datetime.now(UTC).date().isoformat()
 
@@ -113,6 +115,14 @@ def build_iso19139(
             "function": "information",
             "name": {"en": "Dataverse dataset"},
             "description": {"en": "Draft dataset on Dataverse"},
+        }
+    if irods_path:
+        distribution["irods"] = {
+            "url": irods_path,
+            "type": "iRODS",
+            "function": "download",
+            "name": {"en": "iRODS path"},
+            "description": {"en": "Logical path in the local iRODS zone"},
         }
 
     mcf = {

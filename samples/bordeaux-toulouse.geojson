@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Bordeaux" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.58, 44.84]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Toulouse" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1.44, 43.60]
+      }
+    }
+  ]
+}

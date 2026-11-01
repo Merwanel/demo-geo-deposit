@@ -149,5 +149,6 @@ services:
         condition: service_healthy
     volumes:
       - ./scripts/seed.sh:/seed.sh:ro
-      - ./samples/two-cities.geojson:/samples/two-cities.geojson:ro
+      - ./samples/marseille-nice.geojson:/samples/marseille-nice.geojson:ro
+      - ./samples/bordeaux-toulouse.geojson:/samples/bordeaux-toulouse.geojson:ro
     entrypoint: ["/bin/sh", "/seed.sh"]

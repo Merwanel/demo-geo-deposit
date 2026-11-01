@@ -21,7 +21,10 @@ sequenceDiagram
     API-->>User: 201 with catalog, Dataverse, and iRODS links
 ```
 
-A `POST /deposits` puts the GeoJSON in a local iRODS zone under `/tempZone/home/rods/deposits/{uuid}.geojson` and tags that object with the deposit UUID. It creates a draft on `demo.dataverse.org` that cites the iRODS path but does not upload the file, then publishes an ISO 19139 record in GeoNetwork that is publicly visible and links the catalog page, the Dataverse draft, and the iRODS path. Depositing the same file bytes again returns HTTP 409.
+`POST /deposits` puts the GeoJSON in a local iRODS zone under `/tempZone/home/rods/deposits/{uuid}.geojson` and tags that object with the deposit UUID. It creates a draft on `demo.dataverse.org` that cites the iRODS path but does not upload the file, then publishes an ISO 19139 record in GeoNetwork that is publicly visible and links the catalog page, the Dataverse draft, and the iRODS path. Depositing the same file bytes again returns HTTP 409.
+
+<!-- Drop a crop of the public GeoNetwork record (bbox + distribution links) at docs/geonetwork-record.png -->
+![GeoNetwork record after a deposit](docs/geonetwork-record.png)
 
 ## Tech stack
 
@@ -46,7 +49,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-A one-shot `seed` service waits for the API, then deposits `samples/two-cities.geojson` (HTTP 201 on first boot, 409 if the sample is already in the catalog). Open the catalog at http://localhost:8080/geonetwork (`admin` / `admin`); the sample record is visible without logging in. The response also includes the Dataverse draft URL and the iRODS path.
+A one-shot `seed` service waits for the API, then deposits `samples/marseille-nice.geojson` and `samples/bordeaux-toulouse.geojson` (HTTP 201 on first boot, 409 if a sample is already in the catalog). Open the catalog at http://localhost:8080/geonetwork (`admin` / `admin`); the seeded records are visible without logging in.
 
 To deposit another file yourself, either use the interactive docs at http://localhost:8000/docs (`POST /deposits` → Try it out), or:
 
@@ -71,10 +74,9 @@ To stop and wipe the app:
 docker compose down -v
 ```
 
-Drafts on `demo.dataverse.org` are not removed by docker; the demo server deletes datasets every month.
+Drafts on `demo.dataverse.org` are not removed by Compose; the demo server deletes datasets every month.
 
 ## Testing
-
 
 ```bash
 uv sync

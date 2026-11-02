@@ -112,6 +112,7 @@ services:
       start_period: 180s
 
   api:
+    image: ghcr.io/merwanel/demo-geo-deposit:latest
     build: .
     healthcheck:
       test: curl -f http://127.0.0.1:80/docs || exit 1
